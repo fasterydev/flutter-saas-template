@@ -3,29 +3,61 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'auth/auth_shell.dart';
+import 'core/env.dart';
+import 'core/theme_mode_scope.dart';
+import 'screens/enterprise_shell.dart';
 import 'src/clerk_credentials.dart';
 import 'theme/app_theme.dart';
 
 Future<void> main() async {
   try {
     await dotenv.load(fileName: '.env');
-  } catch (_) {
-    // Si no existe .env, se usará --dart-define=CLERK_PUBLISHABLE_KEY=...
+  } catch (e) {
+    // Si no existe .env, se usará --dart-define=...
+    assert(() {
+      // ignore: avoid_print
+      print('[main] .env no cargado: $e');
+      return true;
+    }());
   }
+  assert(() {
+    // ignore: avoid_print
+    print('[main] BACKEND_URL = "${backendUrl.isEmpty ? "(vacío)" : backendUrl}"');
+    return true;
+  }());
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
   @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  ThemeMode _themeMode = ThemeMode.dark;
+
+  void _setThemeMode(ThemeMode mode) {
+    setState(() => _themeMode = mode);
+  }
+
+  @override
   Widget build(BuildContext context) {
+    return ThemeModeScope(
+      themeMode: _themeMode,
+      setThemeMode: _setThemeMode,
+      child: _buildApp(),
+    );
+  }
+
+  Widget _buildApp() {
     if (clerkPublishableKey.isEmpty) {
       return MaterialApp(
         title: 'Clerk Auth',
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,
-        themeMode: ThemeMode.system,
+        themeMode: _themeMode,
         home: const _ClerkKeyMissingScreen(),
       );
     }
@@ -36,7 +68,7 @@ class MyApp extends StatelessWidget {
         title: 'Clerk Auth',
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,
-        themeMode: ThemeMode.system,
+        themeMode: _themeMode,
         home: const _AuthGate(),
       ),
     );
@@ -98,50 +130,9 @@ class _AuthGate extends StatelessWidget {
       body: SafeArea(
         child: ClerkErrorListener(
           child: ClerkAuthBuilder(
-            signedInBuilder: (context, authState) => const _SignedInTestScreen(),
+            signedInBuilder: (context, authState) => const EnterpriseShell(),
             signedOutBuilder: (context, authState) => const AuthShell(),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Pantalla cuando el usuario está autenticado.
-class _SignedInTestScreen extends StatelessWidget {
-  const _SignedInTestScreen();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Prueba Clerk'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        actions: const [
-          Padding(
-            padding: EdgeInsets.only(right: 8.0),
-            child: ClerkUserButton(),
-          ),
-        ],
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.check_circle, color: Colors.green, size: 80),
-            const SizedBox(height: 16),
-            Text(
-              '¡Has iniciado sesión correctamente!',
-              style: Theme.of(context).textTheme.headlineSmall,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Usa el botón de perfil en la barra superior para cerrar sesión.',
-              style: Theme.of(context).textTheme.bodyMedium,
-              textAlign: TextAlign.center,
-            ),
-          ],
         ),
       ),
     );
