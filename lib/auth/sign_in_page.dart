@@ -5,6 +5,7 @@ import 'package:clerk_flutter/clerk_flutter.dart';
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
+import '../widgets/brand_asset.dart';
 import 'auth_card.dart';
 
 /// Página de inicio de sesión (equivalente a app-traky-nextjs auth/sign-in).
@@ -84,7 +85,7 @@ class _SignInPageState extends State<SignInPage> {
                 constraints: const BoxConstraints(maxWidth: 396),
                 child: AuthCard(
                   description: 'Inicia sesión en tu cuenta',
-                  logo: Icon(Icons.account_circle, size: 48, color: textOnPrimary.withValues(alpha: 0.9)),
+                  logo: const BrandAsset(height: 48),
                   child: ValueListenableBuilder<bool>(
                     valueListenable: _loading,
                     builder: (context, loading, _) {
