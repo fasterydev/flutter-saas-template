@@ -32,27 +32,41 @@ class AppRoutes {
 
   static const home = '/';
   static const alerts = '/alerts';
+  static const alertsNew = '/alerts/new';
   static const alertsAnalytics = '/alerts/analytics';
+  static String alertEdit(String id) => '/alerts/$id/edit';
+  static String alertDetail(String id) => '/alerts/$id';
+
   static const packages = '/packages';
+  static const packagesNew = '/packages/new';
   static const packagesStates = '/packages/states';
   static const packagesAnalytics = '/packages/analytics';
-  static const packagesNew = '/packages/new';
-  static String packageEdit(String id) => '/packages/$id';
+  static String packageEdit(String id) => '/packages/$id/edit';
+  static String packageDetail(String id) => '/packages/$id';
 
   static const shipments = '/shipments';
+  static const shipmentsNew = '/shipments/new';
   static const shipmentsStates = '/shipments/states';
   static const shipmentsAnalytics = '/shipments/analytics';
+  static String shipmentEdit(String id) => '/shipments/$id/edit';
+  static String shipmentDetail(String id) => '/shipments/$id';
 
   static const warehouses = '/warehouses';
+  static const warehousesNew = '/warehouses/new';
+  static String warehouseEdit(String id) => '/warehouses/$id/edit';
+  static String warehouseDetail(String id) => '/warehouses/$id';
+
+  static const customers = '/customers';
+  static const customersNew = '/customers/new';
+  static const customersAnalytics = '/customers/analytics';
+  static String customerEdit(String id) => '/customers/$id/edit';
+  static String customerDetail(String id) => '/customers/$id';
 
   static const deliveries = '/deliveries';
   static const deliveriesAnalytics = '/deliveries/analytics';
 
   static const sales = '/sales';
   static const salesAnalytics = '/sales/analytics';
-
-  static const customers = '/customers';
-  static const customersAnalytics = '/customers/analytics';
 
   static const settings = '/settings';
 }

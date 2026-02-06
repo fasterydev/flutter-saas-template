@@ -2,40 +2,38 @@ import 'package:clerk_flutter/clerk_flutter.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/nav_data.dart';
-import '../../services/packages_api.dart';
+import '../../services/alerts_api.dart';
 
-/// Crear o editar paquete (equivalente a [slug] new o id).
-class PackageFormPage extends StatefulWidget {
-  const PackageFormPage({super.key, this.id});
+/// Crear o editar alerta.
+class AlertFormPage extends StatefulWidget {
+  const AlertFormPage({super.key, this.id});
 
-  /// null = crear, no null = editar
   final String? id;
 
   @override
-  State<PackageFormPage> createState() => _PackageFormPageState();
+  State<AlertFormPage> createState() => _AlertFormPageState();
 }
 
-class _PackageFormPageState extends State<PackageFormPage> {
+class _AlertFormPageState extends State<AlertFormPage> {
   final _formKey = GlobalKey<FormState>();
   bool _loading = false;
   bool _loaded = false;
 
   String _trackingNumber = '';
+  String _registrationDate = '';
+  int _declaredValue = 0;
+  String _status = 'unreviewed';
   int? _weight;
   int? _height;
   int? _width;
   int? _length;
-  int? _declaredValue;
   String _comments = '';
-  String? _itemStatusId;
   String? _warehouseId;
-  String? _shipmentId;
   String? _customerId;
-  DateTime? _registrationDate;
 
   bool get isEdit => widget.id != null && widget.id != 'new';
 
-  Future<void> _loadPackage(String token) async {
+  Future<void> _loadAlert(String token) async {
     if (widget.id == null || widget.id == 'new') {
       if (mounted) setState(() => _loaded = true);
       return;
@@ -43,22 +41,21 @@ class _PackageFormPageState extends State<PackageFormPage> {
     if (!mounted) return;
     setState(() => _loading = true);
     try {
-      final p = await PackagesApi.getPackage(token, widget.id!);
+      final a = await AlertsApi.getAlert(token, widget.id!);
       if (!mounted) return;
-      if (p != null) {
+      if (a != null) {
         setState(() {
-          _trackingNumber = p.trackingNumber ?? '';
-          _weight = p.weight;
-          _height = p.height;
-          _width = p.width;
-          _length = p.length;
-          _declaredValue = p.declaredValue;
-          _comments = p.comments ?? '';
-          _itemStatusId = p.itemStatus?.id;
-          _warehouseId = p.warehouse?.id;
-          _shipmentId = p.shipment?.id;
-          _customerId = p.customer?.id;
-          _registrationDate = p.registrationDate;
+          _trackingNumber = a.trackingNumber;
+          _registrationDate = a.registrationDate;
+          _declaredValue = a.declaredValue;
+          _status = a.status;
+          _weight = a.weight;
+          _height = a.height;
+          _width = a.width;
+          _length = a.length;
+          _comments = a.comments ?? '';
+          _warehouseId = a.warehouse?.id;
+          _customerId = a.customer?.id;
           _loading = false;
           _loaded = true;
         });
@@ -75,37 +72,33 @@ class _PackageFormPageState extends State<PackageFormPage> {
     setState(() => _loading = true);
     try {
       final body = <String, dynamic>{
-        'trackingNumber': _trackingNumber.trim().isEmpty
-            ? null
-            : _trackingNumber.trim(),
+        'trackingNumber': _trackingNumber.trim(),
+        'registrationDate': _registrationDate.isEmpty
+            ? DateTime.now().toIso8601String()
+            : _registrationDate,
+        'declaredValue': _declaredValue,
+        'status': _status,
         'weight': _weight,
         'height': _height,
         'width': _width,
         'length': _length,
-        'declaredValue': _declaredValue,
         'comments': _comments.trim().isEmpty ? null : _comments.trim(),
-        'itemStatusId': _itemStatusId,
         'warehouseId': _warehouseId,
-        'shipmentId': _shipmentId,
         'customerId': _customerId,
-        if (_registrationDate != null)
-          'registrationDate': _registrationDate!.toIso8601String(),
       };
       if (isEdit) {
-        await PackagesApi.updatePackage(token, widget.id!, body);
+        await AlertsApi.updateAlert(token, widget.id!, body);
       } else {
-        await PackagesApi.createPackage(token, body);
+        await AlertsApi.createAlert(token, body);
       }
       if (mounted) {
-        Navigator.of(
-          context,
-        ).pushNamedAndRemoveUntil(AppRoutes.packages, (route) => false);
+        Navigator.of(context)
+            .pushNamedAndRemoveUntil(AppRoutes.alerts, (route) => false);
       }
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Error al guardar')));
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Error al guardar')));
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -116,7 +109,7 @@ class _PackageFormPageState extends State<PackageFormPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(isEdit ? 'Editar paquete' : 'Nuevo paquete'),
+        title: Text(isEdit ? 'Editar alerta' : 'Nueva alerta'),
         backgroundColor: Theme.of(context).colorScheme.primary,
         foregroundColor: Theme.of(context).colorScheme.onPrimary,
       ),
@@ -131,8 +124,7 @@ class _PackageFormPageState extends State<PackageFormPage> {
               }
               if (token != null && !_loaded && !_loading) {
                 WidgetsBinding.instance.addPostFrameCallback(
-                  (_) => _loadPackage(token),
-                );
+                    (_) => _loadAlert(token));
               }
               if (!_loaded && _loading) {
                 return const Center(child: CircularProgressIndicator());
@@ -151,16 +143,40 @@ class _PackageFormPageState extends State<PackageFormPage> {
                         ),
                         initialValue: _trackingNumber,
                         onChanged: (v) => _trackingNumber = v,
+                        validator: (v) =>
+                            (v == null || v.trim().isEmpty) ? 'Requerido' : null,
                       ),
                       const SizedBox(height: 16),
                       TextFormField(
                         decoration: const InputDecoration(
-                          labelText: 'Peso (ej. gramos)',
+                          labelText: 'Fecha de registro (YYYY-MM-DD)',
+                          border: OutlineInputBorder(),
+                        ),
+                        initialValue: _registrationDate,
+                        onChanged: (v) => _registrationDate = v,
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        decoration: const InputDecoration(
+                          labelText: 'Valor declarado',
                           border: OutlineInputBorder(),
                         ),
                         keyboardType: TextInputType.number,
-                        initialValue: _weight?.toString(),
-                        onChanged: (v) => _weight = int.tryParse(v),
+                        initialValue: _declaredValue.toString(),
+                        onChanged: (v) => _declaredValue = int.tryParse(v) ?? 0,
+                      ),
+                      const SizedBox(height: 16),
+                      DropdownButtonFormField<String>(
+                        value: _status,
+                        decoration: const InputDecoration(
+                          labelText: 'Estado',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: const [
+                          DropdownMenuItem(value: 'unreviewed', child: Text('Sin revisar')),
+                          DropdownMenuItem(value: 'archived', child: Text('Archivada')),
+                        ],
+                        onChanged: (v) => setState(() => _status = v ?? _status),
                       ),
                       const SizedBox(height: 16),
                       TextFormField(
@@ -181,11 +197,9 @@ class _PackageFormPageState extends State<PackageFormPage> {
                             ? const SizedBox(
                                 height: 24,
                                 width: 24,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
+                                child: CircularProgressIndicator(strokeWidth: 2),
                               )
-                            : Text(isEdit ? 'Guardar' : 'Crear paquete'),
+                            : Text(isEdit ? 'Guardar' : 'Crear alerta'),
                       ),
                     ],
                   ),
