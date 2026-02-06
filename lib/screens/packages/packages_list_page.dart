@@ -6,6 +6,7 @@ import '../../core/env.dart';
 import '../../core/nav_data.dart';
 import '../../models/package_model.dart';
 import '../../services/packages_api.dart';
+import '../../widgets/empty_state_message.dart';
 
 /// Lista de paquetes (enterprise) con filtros y paginación.
 class PackagesListPage extends StatefulWidget {
@@ -36,6 +37,7 @@ class _PackagesListPageState extends State<PackagesListPage> {
       return;
     }
     if (resetPage) _page = 1;
+    if (!mounted) return;
     setState(() => _loading = true);
     try {
       final res = await PackagesApi.getPackages(
@@ -44,6 +46,7 @@ class _PackagesListPageState extends State<PackagesListPage> {
         limit: _limit,
         trackingNumber: _trackingNumber?.trim().isEmpty == true ? null : _trackingNumber,
       );
+      if (!mounted) return;
       setState(() {
         _packages = res.data;
         _pagination = res.pagination;
@@ -54,7 +57,7 @@ class _PackagesListPageState extends State<PackagesListPage> {
         debugPrint('[Paquetes] Error al consultar API: $e');
         debugPrint(st.toString());
       }
-      setState(() => _loading = false);
+      if (mounted) setState(() => _loading = false);
     }
   }
 
@@ -114,7 +117,10 @@ class _PackagesListPageState extends State<PackagesListPage> {
                     child: _loading && _packages.isEmpty
                         ? const Center(child: CircularProgressIndicator())
                         : _packages.isEmpty
-                            ? const Center(child: Text('No hay paquetes'))
+                            ? const EmptyStateMessage(
+                                message: 'No hay paquetes',
+                                icon: Icons.inventory_2_outlined,
+                              )
                             : ListView.builder(
                                 padding: const EdgeInsets.symmetric(horizontal: 16),
                                 itemCount: _packages.length + 1,
@@ -143,18 +149,9 @@ class _PackagesListPageState extends State<PackagesListPage> {
                                       subtitle: Text(
                                         p.itemStatus?.label ?? 'Sin estado',
                                       ),
-                                      trailing: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          IconButton(
-                                            icon: const Icon(Icons.edit),
-                                            onPressed: () => Navigator.of(context)
-                                                .pushNamed(AppRoutes.packageEdit(p.id)),
-                                          ),
-                                        ],
-                                      ),
+                                      trailing: const Icon(Icons.chevron_right),
                                       onTap: () => Navigator.of(context)
-                                          .pushNamed(AppRoutes.packageEdit(p.id)),
+                                          .pushNamed(AppRoutes.packageDetail(p.id)),
                                     ),
                                   );
                                 },
