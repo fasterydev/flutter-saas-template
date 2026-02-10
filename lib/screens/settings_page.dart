@@ -63,9 +63,16 @@ class SettingsPage extends StatelessWidget {
                   ),
             ),
             const SizedBox(height: 12),
-            const Padding(
-              padding: EdgeInsets.only(right: 8),
-              child: ClerkUserButton(),
+            OutlinedButton.icon(
+              onPressed: () async {
+                await ClerkAuth.of(context).signOut();
+              },
+              icon: const Icon(Icons.logout_rounded, size: 20),
+              label: const Text('Cerrar sesión'),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                alignment: Alignment.centerLeft,
+              ),
             ),
           ],
         ),

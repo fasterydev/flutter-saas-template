@@ -20,6 +20,7 @@ class _PackagesAnalyticsPageState extends State<PackagesAnalyticsPage> {
   DateTime _end = DateTime.now();
 
   Future<void> _load(String token) async {
+    if (!mounted) return;
     setState(() => _loading = true);
     try {
       final startStr = '${_start.year}-${_start.month.toString().padLeft(2, '0')}-${_start.day.toString().padLeft(2, '0')}';
@@ -29,12 +30,13 @@ class _PackagesAnalyticsPageState extends State<PackagesAnalyticsPage> {
         startDate: startStr,
         endDate: endStr,
       );
+      if (!mounted) return;
       setState(() {
         _data = res;
         _loading = false;
       });
     } catch (_) {
-      setState(() => _loading = false);
+      if (mounted) setState(() => _loading = false);
     }
   }
 
@@ -146,7 +148,7 @@ class _PackagesAnalyticsPageState extends State<PackagesAnalyticsPage> {
                                 lastDate: DateTime.now(),
                                 initialDateRange: DateTimeRange(start: _start, end: _end),
                               );
-                              if (range != null) {
+                              if (range != null && mounted) {
                                 setState(() {
                                   _start = range.start;
                                   _end = range.end;
