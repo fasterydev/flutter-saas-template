@@ -1,4 +1,4 @@
-# flutter_project_template
+# Traky
 
 Plantilla de proyecto Flutter con autenticación Clerk (sign-in / sign-up).
 
@@ -11,6 +11,58 @@ Plantilla de proyecto Flutter con autenticación Clerk (sign-in / sign-up).
 3. Si acabas de clonar, crea `.env` (copia de `.env.example`) antes del primer `flutter run`.
 
 La pantalla de prueba muestra la UI de Clerk para **iniciar sesión** y **registrarse**. Una vez autenticado, verás una pantalla de bienvenida y podrás cerrar sesión desde el botón de perfil en la barra superior.
+
+## Icono de la app (logo del launcher)
+
+El proyecto usa [flutter_launcher_icons](https://pub.dev/packages/flutter_launcher_icons) para generar los iconos de **Android** e **iOS** a partir de unas imágenes base. La configuración está en `pubspec.yaml` (bloque `flutter_launcher_icons` y `dev_dependencies`).
+
+### 1) Preparar las imágenes (recomendado)
+
+Sustituye estos archivos en tu repo (mismas rutas y nombres que en `pubspec.yaml`):
+
+| Archivo | Uso | Tamaño recomendado |
+|---------|-----|---------------------|
+| `assets/icon/app_icon.png` | Base para iOS y referencia general | **1024×1024 px**, PNG |
+| `assets/icon/app_icon_foreground.png` | Primer plano del icono adaptativo Android | **1024×1024 px**, PNG, logo centrado con margen (~20 %) |
+
+- **Android adaptive**: el fondo del icono adaptativo está definido con `adaptive_icon_background: "#FFFFFF"` en `pubspec.yaml`. Puedes cambiar el color hexadecimal o usar una imagen de fondo según la [documentación del paquete](https://pub.dev/packages/flutter_launcher_icons).
+- **iOS**: conviene que el diseño ocupe bien el cuadrado y evite bordes transparentes muy grandes.
+
+### 2) Regenerar los iconos en todas las densidades
+
+Desde la raíz del proyecto:
+
+```bash
+flutter pub get
+dart run flutter_launcher_icons
+```
+
+Si no ves el cambio en el dispositivo:
+
+```bash
+flutter clean
+flutter pub get
+dart run flutter_launcher_icons
+flutter run
+```
+
+### 3) Si cambias rutas o nombres de archivo
+
+Edita el bloque `flutter_launcher_icons:` en `pubspec.yaml` (`image_path`, `adaptive_icon_foreground`, etc.) para que apunten a tus nuevos archivos y vuelve a ejecutar `dart run flutter_launcher_icons`.
+
+### 4) Si actualizas la versión del paquete `flutter_launcher_icons`
+
+En `pubspec.yaml`, dentro de `dev_dependencies`, cambia la línea `flutter_launcher_icons: ^...` a la versión deseada (consulta [pub.dev](https://pub.dev/packages/flutter_launcher_icons)), ejecuta `flutter pub get` y luego `dart run flutter_launcher_icons` de nuevo.
+
+### 5) Nombre de la app en el sistema (no es el logo)
+
+Esto es independiente del launcher: por defecto el nombre visible es **Traky**. Si lo cambias, revisa al menos:
+
+- `android/app/src/main/AndroidManifest.xml` → `android:label`
+- `ios/Runner/Info.plist` → `CFBundleDisplayName` y `CFBundleName`
+- `lib/main.dart` → `MaterialApp(title: ...)`
+
+> El campo `name:` en `pubspec.yaml` es el **nombre del paquete Dart** (p. ej. `flutter_project_template`); renombrarlo implica cambiar imports en todo el código. No hace falta tocarlo solo para cambiar logo o nombre en pantalla.
 
 ## Comandos Flutter
 
