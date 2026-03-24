@@ -44,6 +44,7 @@ dependencies:
 
   # HTTP para APIs enterprise
   http: ^1.2.0
+  adaptive_platform_ui: ^0.1.103
 
 dev_dependencies:
   flutter_test:
