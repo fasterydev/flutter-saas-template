@@ -25,7 +25,7 @@ class _SignUpPageState extends State<SignUpPage> {
   final _scaffoldKey = GlobalKey<ScaffoldMessengerState>();
 
   late ClerkAuthState _authState;
-  late StreamSubscription<clerk.AuthError> _errorSub;
+  late StreamSubscription<clerk.ClerkError> _errorSub;
 
   @override
   void initState() {

@@ -34,17 +34,27 @@ class AlertsApi {
       'page': page.toString(),
       'limit': limit.toString(),
     };
-    if (trackingNumber != null && trackingNumber.isNotEmpty)
+    if (trackingNumber != null && trackingNumber.isNotEmpty) {
       q['trackingNumber'] = trackingNumber;
-    if (startDate != null && startDate.isNotEmpty) q['startDate'] = startDate;
-    if (endDate != null && endDate.isNotEmpty) q['endDate'] = endDate;
-    if (status != null && status.isNotEmpty) q['status'] = status;
-    if (warehouseId != null && warehouseId.isNotEmpty)
+    }
+    if (startDate != null && startDate.isNotEmpty) {
+      q['startDate'] = startDate;
+    }
+    if (endDate != null && endDate.isNotEmpty) {
+      q['endDate'] = endDate;
+    }
+    if (status != null && status.isNotEmpty) {
+      q['status'] = status;
+    }
+    if (warehouseId != null && warehouseId.isNotEmpty) {
       q['warehouseId'] = warehouseId;
-    if (customerId != null && customerId.isNotEmpty)
+    }
+    if (customerId != null && customerId.isNotEmpty) {
       q['customerId'] = customerId;
-    if (enterpriseId != null && enterpriseId.isNotEmpty)
+    }
+    if (enterpriseId != null && enterpriseId.isNotEmpty) {
       q['enterpriseId'] = enterpriseId;
+    }
 
     final fullPath =
         _base.isEmpty ? '/alerts/getAlerts' : '$_base/alerts/getAlerts';

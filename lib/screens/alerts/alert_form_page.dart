@@ -167,7 +167,7 @@ class _AlertFormPageState extends State<AlertFormPage> {
                       ),
                       const SizedBox(height: 16),
                       DropdownButtonFormField<String>(
-                        value: _status,
+                        initialValue: _status,
                         decoration: const InputDecoration(
                           labelText: 'Estado',
                           border: OutlineInputBorder(),
@@ -192,7 +192,7 @@ class _AlertFormPageState extends State<AlertFormPage> {
                       FilledButton(
                         onPressed: _loading || token == null
                             ? null
-                            : () => _submit(token!),
+                            : () => _submit(token),
                         child: _loading
                             ? const SizedBox(
                                 height: 24,

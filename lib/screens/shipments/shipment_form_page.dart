@@ -134,7 +134,7 @@ class _ShipmentFormPageState extends State<ShipmentFormPage> {
                       FilledButton(
                         onPressed: _loading || token == null
                             ? null
-                            : () => _submit(token!),
+                            : () => _submit(token),
                         child: _loading
                             ? const SizedBox(
                                 height: 24,

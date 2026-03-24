@@ -28,7 +28,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   String _error = '';
 
   late ClerkAuthState _authState;
-  late StreamSubscription<clerk.AuthError> _errorSub;
+  late StreamSubscription<clerk.ClerkError> _errorSub;
 
   @override
   void initState() {

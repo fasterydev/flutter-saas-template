@@ -236,7 +236,7 @@ class _WarehouseFormPageState extends State<WarehouseFormPage> {
                         keyboardType: TextInputType.number,
                         initialValue: _pricePerPoundClient?.toString(),
                         onChanged: (v) =>
-                            _pricePerPoundClient = int.tryParse(v ?? ''),
+                            _pricePerPoundClient = int.tryParse(v),
                       ),
                       const SizedBox(height: 16),
                       TextFormField(
@@ -247,13 +247,13 @@ class _WarehouseFormPageState extends State<WarehouseFormPage> {
                         keyboardType: TextInputType.number,
                         initialValue: _pricePerPoundProvider?.toString(),
                         onChanged: (v) =>
-                            _pricePerPoundProvider = int.tryParse(v ?? ''),
+                            _pricePerPoundProvider = int.tryParse(v),
                       ),
                       const SizedBox(height: 24),
                       FilledButton(
                         onPressed: _loading || token == null
                             ? null
-                            : () => _submit(token!),
+                            : () => _submit(token),
                         child: _loading
                             ? const SizedBox(
                                 height: 24,

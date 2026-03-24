@@ -34,18 +34,27 @@ class PackagesApi {
       'page': page.toString(),
       'limit': limit.toString(),
     };
-    if (trackingNumber != null && trackingNumber.isNotEmpty)
+    if (trackingNumber != null && trackingNumber.isNotEmpty) {
       q['trackingNumber'] = trackingNumber;
-    if (startDate != null && startDate.isNotEmpty) q['startDate'] = startDate;
-    if (endDate != null && endDate.isNotEmpty) q['endDate'] = endDate;
-    if (itemStatusId != null && itemStatusId.isNotEmpty)
+    }
+    if (startDate != null && startDate.isNotEmpty) {
+      q['startDate'] = startDate;
+    }
+    if (endDate != null && endDate.isNotEmpty) {
+      q['endDate'] = endDate;
+    }
+    if (itemStatusId != null && itemStatusId.isNotEmpty) {
       q['itemStatusId'] = itemStatusId;
-    if (warehouseId != null && warehouseId.isNotEmpty)
+    }
+    if (warehouseId != null && warehouseId.isNotEmpty) {
       q['warehouseId'] = warehouseId;
-    if (shipmentId != null && shipmentId.isNotEmpty)
+    }
+    if (shipmentId != null && shipmentId.isNotEmpty) {
       q['shipmentId'] = shipmentId;
-    if (customerId != null && customerId.isNotEmpty)
+    }
+    if (customerId != null && customerId.isNotEmpty) {
       q['customerId'] = customerId;
+    }
 
     final fullPath = _base.isEmpty ? '/packages/getPackages' : '$_base/packages/getPackages';
     final uri = Uri.parse(fullPath).replace(queryParameters: q);
@@ -95,10 +104,11 @@ class PackagesApi {
         'Content-Type': 'application/json',
       },
     );
-    if (kDebugMode)
+    if (kDebugMode) {
       debugPrint(
         '[PackagesApi] Response getPackage ${r.statusCode}: ${r.body}',
       );
+    }
     if (r.statusCode != 200) return null;
     final body = jsonDecode(r.body) as Map<String, dynamic>;
     final data = body['data'] ?? body;
@@ -123,10 +133,11 @@ class PackagesApi {
       },
       body: jsonEncode(data),
     );
-    if (kDebugMode)
+    if (kDebugMode) {
       debugPrint(
         '[PackagesApi] Response createPackage ${r.statusCode}: ${r.body}',
       );
+    }
     return jsonDecode(r.body) as Map<String, dynamic>;
   }
 
@@ -149,10 +160,11 @@ class PackagesApi {
       },
       body: jsonEncode(data),
     );
-    if (kDebugMode)
+    if (kDebugMode) {
       debugPrint(
         '[PackagesApi] Response updatePackage ${r.statusCode}: ${r.body}',
       );
+    }
     return jsonDecode(r.body) as Map<String, dynamic>;
   }
 
@@ -173,10 +185,11 @@ class PackagesApi {
         'Content-Type': 'application/json',
       },
     );
-    if (kDebugMode)
+    if (kDebugMode) {
       debugPrint(
         '[PackagesApi] Response deletePackage ${r.statusCode}: ${r.body}',
       );
+    }
     return jsonDecode(r.body) as Map<String, dynamic>;
   }
 
@@ -200,10 +213,11 @@ class PackagesApi {
         'Content-Type': 'application/json',
       },
     );
-    if (kDebugMode)
+    if (kDebugMode) {
       debugPrint(
         '[PackagesApi] Response getPackagesAnalytics ${r.statusCode}: ${r.body}',
       );
+    }
     if (r.statusCode != 200) return null;
     final body = jsonDecode(r.body) as Map<String, dynamic>;
     final data = body['data'] ?? body;

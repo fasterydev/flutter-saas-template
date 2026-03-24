@@ -22,7 +22,7 @@ class _AuthScreenState extends State<AuthScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
-  late StreamSubscription<clerk.AuthError> _errorSubscription;
+  late StreamSubscription<clerk.ClerkError> _errorSubscription;
   late ClerkAuthState _authState;
 
   /// true = Sign up, false = Sign in
@@ -44,7 +44,7 @@ class _AuthScreenState extends State<AuthScreen> {
     _user.value = _authState.user;
   }
 
-  void _onError(clerk.AuthError error) {
+  void _onError(clerk.ClerkError error) {
     _scaffoldKey.currentState?.showSnackBar(
       SnackBar(content: Text(error.message)),
     );
@@ -54,7 +54,7 @@ class _AuthScreenState extends State<AuthScreen> {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
     if (email.isEmpty || password.isEmpty) {
-      _onError(clerk.AuthError(message: 'Introduce email y contraseña', code: clerk.AuthErrorCode.signInError));
+      _onError(clerk.ClerkError.clientAppError(message: 'Introduce email y contraseña'));
       return;
     }
     _loading.value = true;
@@ -73,11 +73,11 @@ class _AuthScreenState extends State<AuthScreen> {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
     if (email.isEmpty || password.isEmpty) {
-      _onError(clerk.AuthError(message: 'Introduce email y contraseña', code: clerk.AuthErrorCode.signInError));
+      _onError(clerk.ClerkError.clientAppError(message: 'Introduce email y contraseña'));
       return;
     }
     if (password.length < 8) {
-      _onError(clerk.AuthError(message: 'La contraseña debe tener al menos 8 caracteres', code: clerk.AuthErrorCode.invalidPassword));
+      _onError(clerk.ClerkError.clientAppError(message: 'La contraseña debe tener al menos 8 caracteres'));
       return;
     }
     _loading.value = true;

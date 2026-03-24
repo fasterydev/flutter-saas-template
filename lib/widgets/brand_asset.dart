@@ -46,7 +46,7 @@ class BrandAsset extends StatelessWidget {
       height: h,
       width: w,
       fit: fit,
-      errorBuilder: (_, __, ___) => Icon(
+      errorBuilder: (context, Object error, StackTrace? stackTrace) => Icon(
         useIcon ? Icons.inventory_2_outlined : Icons.image_not_supported_outlined,
         size: h,
         color: Theme.of(context).colorScheme.onSurface,

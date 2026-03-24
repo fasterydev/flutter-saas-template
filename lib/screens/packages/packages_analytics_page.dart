@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 
 import '../../models/package_model.dart';
 import '../../services/packages_api.dart';
-import '../../theme/app_theme.dart';
 
 /// Analíticas de paquetes (getPackagesAnalytics).
 class PackagesAnalyticsPage extends StatefulWidget {
@@ -153,7 +152,7 @@ class _PackagesAnalyticsPageState extends State<PackagesAnalyticsPage> {
                                   _start = range.start;
                                   _end = range.end;
                                 });
-                                _load(token!);
+                                _load(token);
                               }
                             },
                       child: const Text('Cambiar rango de fechas'),
