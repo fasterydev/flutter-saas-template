@@ -107,12 +107,6 @@ flutter run -d chrome
 Ejecuta la versión web en Chrome.
 
 ```bash
-flutter run -d macos
-```
-
-Ejecuta en macOS (si el soporte está habilitado).
-
-```bash
 flutter devices
 ```
 
@@ -134,16 +128,12 @@ flutter analyze
 flutter test
 ```
 
-### iOS y macOS (CocoaPods)
+### iOS (CocoaPods)
 
-Tras `flutter pub get`, si compilar en iOS o macOS falla por pods:
+Tras `flutter pub get`, si compilar en iOS falla por pods:
 
 ```bash
 cd ios && pod install && cd ..
-```
-
-```bash
-cd macos && pod install && cd ..
 ```
 
 ### Builds de release (ejemplos)
@@ -158,10 +148,6 @@ flutter build ios
 
 ```bash
 flutter build web
-```
-
-```bash
-flutter build macos
 ```
 
 ## Getting Started

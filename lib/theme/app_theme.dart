@@ -133,4 +133,29 @@ class AppTheme {
       ),
     );
   }
+
+  /// Mismo estilo que los campos de perfil / auth (etiqueta flotante, relleno suave).
+  static InputDecoration profileFieldDecoration(
+    BuildContext context,
+    String label, {
+    String? hint,
+  }) {
+    final scheme = Theme.of(context).colorScheme;
+    final border = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(radiusMd),
+      borderSide: BorderSide(color: scheme.outline.withValues(alpha: 0.65)),
+    );
+    return InputDecoration(
+      labelText: label,
+      hintText: hint,
+      filled: true,
+      fillColor: scheme.surfaceContainerHighest.withValues(alpha: 0.35),
+      border: border,
+      enabledBorder: border,
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(radiusMd),
+        borderSide: BorderSide(color: scheme.primary, width: 2),
+      ),
+    );
+  }
 }

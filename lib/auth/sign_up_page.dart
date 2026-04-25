@@ -1,12 +1,13 @@
-import 'dart:async';
-
 import 'package:clerk_auth/clerk_auth.dart' as clerk;
 import 'package:clerk_flutter/clerk_flutter.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../theme/app_theme.dart';
+import '../widgets/adaptive_app_snackbar.dart';
 import '../widgets/brand_asset.dart';
-import 'auth_card.dart';
+import 'auth_form_widgets.dart';
+import 'sign_in_page.dart';
 
 /// Página de registro (equivalente a app-traky-nextjs auth/sign-up).
 class SignUpPage extends StatefulWidget {
@@ -21,20 +22,18 @@ class SignUpPage extends StatefulWidget {
 class _SignUpPageState extends State<SignUpPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   final _loading = ValueNotifier<bool>(false);
-  final _scaffoldKey = GlobalKey<ScaffoldMessengerState>();
+  BuildContext? _snackBodyContext;
 
   late ClerkAuthState _authState;
-  late StreamSubscription<clerk.ClerkError> _errorSub;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       _authState = ClerkAuth.of(context);
-      _errorSub = _authState.errorStream.listen((e) {
-        _scaffoldKey.currentState?.showSnackBar(SnackBar(content: Text(e.message)));
-      });
     });
   }
 
@@ -42,22 +41,39 @@ class _SignUpPageState extends State<SignUpPage> {
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
-    _errorSub.cancel();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
   Future<void> _submit() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
-    if (email.isEmpty || password.isEmpty) {
-      _scaffoldKey.currentState?.showSnackBar(
-        const SnackBar(content: Text('Introduce correo y contraseña')),
+    final confirm = _confirmPasswordController.text;
+    final c = _snackBodyContext;
+    if (email.isEmpty || password.isEmpty || confirm.isEmpty) {
+      if (c == null || !c.mounted) return;
+      AdaptiveAppSnackBar.show(
+        c,
+        'Completa correo y ambas contraseñas',
+        type: AdaptiveSnackBarType.info,
+      );
+      return;
+    }
+    if (password != confirm) {
+      if (c == null || !c.mounted) return;
+      AdaptiveAppSnackBar.show(
+        c,
+        'Las contraseñas no coinciden',
+        type: AdaptiveSnackBarType.warning,
       );
       return;
     }
     if (password.length < 8) {
-      _scaffoldKey.currentState?.showSnackBar(
-        const SnackBar(content: Text('La contraseña debe tener al menos 8 caracteres')),
+      if (c == null || !c.mounted) return;
+      AdaptiveAppSnackBar.show(
+        c,
+        'La contraseña debe tener al menos 8 caracteres',
+        type: AdaptiveSnackBarType.info,
       );
       return;
     }
@@ -67,7 +83,20 @@ class _SignUpPageState extends State<SignUpPage> {
         strategy: clerk.Strategy.password,
         emailAddress: email,
         password: password,
+        passwordConfirmation: confirm,
       );
+      if (!mounted) return;
+      final sc = _snackBodyContext;
+      if (sc == null || !sc.mounted) return;
+      AdaptiveAppSnackBar.show(
+        sc,
+        'Si debes confirmar el correo, hazlo y vuelve a entrar. '
+        'Con la sesión iniciada completarás la verificación de identidad en la app.',
+        type: AdaptiveSnackBarType.success,
+        duration: const Duration(seconds: 5),
+      );
+      if (!mounted) return;
+      Navigator.of(context).pushReplacementNamed(SignInPage.routeName);
     } finally {
       _loading.value = false;
     }
@@ -75,154 +104,169 @@ class _SignUpPageState extends State<SignUpPage> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textOnPrimary = isDark ? AppTheme.darkForeground : AppTheme.lightForeground;
-    final btnBg = isDark ? AppTheme.darkBackground : AppTheme.lightBackground;
-    final btnFg = isDark ? AppTheme.darkPrimary : AppTheme.lightPrimary;
-
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final onText = scheme.onSurface;
+    final accent = scheme.primary;
     return ScaffoldMessenger(
-      key: _scaffoldKey,
       child: Scaffold(
-        body: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 396),
-                child: AuthCard(
-                  description: 'Regístrate para crear una cuenta',
-                  logo: const BrandAsset(height: 48),
-                  child: ValueListenableBuilder<bool>(
-                    valueListenable: _loading,
-                    builder: (context, loading, _) {
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          _SocialButton(
-                            label: 'Continuar con Google',
-                            icon: Icons.g_mobiledata_rounded,
-                            backgroundColor: btnBg,
-                            foregroundColor: btnFg,
-                            onPressed: loading ? null : () => _authState.ssoSignUp(context, clerk.Strategy.oauthGoogle),
-                          ),
-                          const SizedBox(height: 12),
-                          _SocialButton(
-                            label: 'Continuar con Apple',
-                            icon: Icons.apple,
-                            backgroundColor: textOnPrimary,
-                            foregroundColor: btnBg,
-                            onPressed: loading ? null : () => _authState.ssoSignUp(context, clerk.Strategy.oauthApple),
-                          ),
-                          const SizedBox(height: 20),
-                          Row(
+        backgroundColor: scheme.surface,
+        body: Builder(
+          builder: (snackCtx) {
+            _snackBodyContext = snackCtx;
+            return SafeArea(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(28, 12, 28, 28),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 400),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              Expanded(child: Divider(color: textOnPrimary.withValues(alpha: 0.5))),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 12),
-                                child: Text('ó', style: TextStyle(color: textOnPrimary, fontSize: 14)),
+                              const Center(
+                                child: BrandAsset(useIcon: true, height: 48),
                               ),
-                              Expanded(child: Divider(color: textOnPrimary.withValues(alpha: 0.5))),
-                            ],
-                          ),
-                          const SizedBox(height: 20),
-                          Row(
-                            children: [
-                              Text('Correo electrónico', style: TextStyle(color: textOnPrimary, fontSize: 14, fontWeight: FontWeight.w500)),
-                              Text(' *', style: TextStyle(color: AppTheme.lightDestructive, fontSize: 14)),
-                            ],
-                          ),
-                          const SizedBox(height: 6),
-                          TextField(
-                            controller: _emailController,
-                            keyboardType: TextInputType.emailAddress,
-                            decoration: InputDecoration(
-                              hintText: 'nombre@empresa.com',
-                              filled: true,
-                              fillColor: btnBg,
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppTheme.radiusMd)),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            children: [
-                              Text('Contraseña', style: TextStyle(color: textOnPrimary, fontSize: 14, fontWeight: FontWeight.w500)),
-                              Text(' *', style: TextStyle(color: AppTheme.lightDestructive, fontSize: 14)),
-                            ],
-                          ),
-                          const SizedBox(height: 6),
-                          TextField(
-                            controller: _passwordController,
-                            obscureText: true,
-                            onSubmitted: (_) => _submit(),
-                            decoration: InputDecoration(
-                              filled: true,
-                              fillColor: btnBg,
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppTheme.radiusMd)),
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-                          SizedBox(
-                            height: 48,
-                            child: ElevatedButton(
-                              onPressed: loading ? null : _submit,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: btnBg,
-                                foregroundColor: btnFg,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppTheme.radiusMd)),
+                              const SizedBox(height: 16),
+                              const Center(
+                                child: BrandAsset(height: 28),
                               ),
-                              child: loading ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(strokeWidth: 2)) : const Text('Registrarse'),
-                            ),
+                              const SizedBox(height: 24),
+                              Text(
+                                'Regístrate para crear una cuenta',
+                                textAlign: TextAlign.center,
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  color: onText,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: -0.3,
+                                  height: 1.35,
+                                ),
+                              ),
+                              const SizedBox(height: 28),
+                              ValueListenableBuilder<bool>(
+                                valueListenable: _loading,
+                                builder: (context, loading, _) {
+                                  return Column(
+                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                    children: [
+                                      AuthSocialIconRow(
+                                        loading: loading,
+                                        accent: accent,
+                                        googleIcon: SvgPicture.asset(
+                                          AuthClerkAssets.googleSvg,
+                                          fit: BoxFit.contain,
+                                        ),
+                                        appleIcon: SvgPicture.asset(
+                                          AuthClerkAssets.appleSvg,
+                                          fit: BoxFit.contain,
+                                        ),
+                                        onGoogle: () => _authState.ssoSignUp(
+                                              context,
+                                              clerk.Strategy.oauthGoogle,
+                                            ),
+                                        onApple: () => _authState.ssoSignUp(
+                                              context,
+                                              clerk.Strategy.oauthApple,
+                                            ),
+                                      ),
+                                      const SizedBox(height: 22),
+                                      AuthOrDivider(onPrimary: onText),
+                                      const SizedBox(height: 22),
+                                      TextField(
+                                        controller: _emailController,
+                                        keyboardType: TextInputType.emailAddress,
+                                        textInputAction: TextInputAction.next,
+                                        style: theme.textTheme.bodyLarge?.copyWith(
+                                          color: scheme.onSurface,
+                                        ),
+                                        cursorColor: scheme.primary,
+                                        decoration: AppTheme.profileFieldDecoration(
+                                          context,
+                                          'Correo electrónico *',
+                                          hint: 'nombre@gmail.com',
+                                        ),
+                                      ),
+                                      const SizedBox(height: 18),
+                                      TextField(
+                                        controller: _passwordController,
+                                        obscureText: true,
+                                        textInputAction: TextInputAction.next,
+                                        style: theme.textTheme.bodyLarge?.copyWith(
+                                          color: scheme.onSurface,
+                                        ),
+                                        cursorColor: scheme.primary,
+                                        decoration: AppTheme.profileFieldDecoration(
+                                          context,
+                                          'Contraseña *',
+                                        ),
+                                      ),
+                                      const SizedBox(height: 18),
+                                      TextField(
+                                        controller: _confirmPasswordController,
+                                        obscureText: true,
+                                        textInputAction: TextInputAction.done,
+                                        onSubmitted: (_) => _submit(),
+                                        style: theme.textTheme.bodyLarge?.copyWith(
+                                          color: scheme.onSurface,
+                                        ),
+                                        cursorColor: scheme.primary,
+                                        decoration: AppTheme.profileFieldDecoration(
+                                          context,
+                                          'Confirmar contraseña *',
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        'Mínimo 8 caracteres',
+                                        style: theme.textTheme.bodySmall?.copyWith(
+                                          color: scheme.onSurfaceVariant,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 18),
+                                      AuthPrimaryCtaButton(
+                                        label: 'Registrarse',
+                                        icon: Icons.person_add_rounded,
+                                        loading: loading,
+                                        onPrimary: scheme.onPrimary,
+                                        primary: scheme.primary,
+                                        onPressed: loading ? null : _submit,
+                                      ),
+                                      const SizedBox(height: 18),
+                                      Center(
+                                        child: TextButton(
+                                          onPressed: () => Navigator.of(context)
+                                              .pushReplacementNamed('/auth/sign-in'),
+                                          style: TextButton.styleFrom(
+                                            foregroundColor: accent,
+                                          ),
+                                          child: Text(
+                                            '¿Ya tienes una cuenta? Inicia sesión',
+                                            style: theme.textTheme.labelLarge?.copyWith(
+                                              decoration: TextDecoration.underline,
+                                              decorationColor:
+                                                  accent.withValues(alpha: 0.45),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 16),
-                          Center(
-                            child: TextButton(
-                              onPressed: () => Navigator.of(context).pushReplacementNamed('/auth/sign-in'),
-                              child: Text('¿Ya tienes una cuenta? Inicia sesión', style: TextStyle(color: textOnPrimary, fontSize: 14)),
-                            ),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
               ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SocialButton extends StatelessWidget {
-  const _SocialButton({
-    required this.label,
-    required this.icon,
-    required this.backgroundColor,
-    required this.foregroundColor,
-    this.onPressed,
-  });
-
-  final String label;
-  final IconData icon;
-  final Color backgroundColor;
-  final Color foregroundColor;
-  final VoidCallback? onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 48,
-      child: OutlinedButton(
-        onPressed: onPressed,
-        style: OutlinedButton.styleFrom(
-          backgroundColor: backgroundColor,
-          foregroundColor: foregroundColor,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppTheme.radiusMd)),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [Icon(icon, size: 22), const SizedBox(width: 10), Text(label)],
+            );
+          },
         ),
       ),
     );

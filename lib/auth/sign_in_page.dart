@@ -1,12 +1,12 @@
-import 'dart:async';
-
 import 'package:clerk_auth/clerk_auth.dart' as clerk;
 import 'package:clerk_flutter/clerk_flutter.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../theme/app_theme.dart';
+import '../widgets/adaptive_app_snackbar.dart';
 import '../widgets/brand_asset.dart';
-import 'auth_card.dart';
+import 'auth_form_widgets.dart';
 
 /// Página de inicio de sesión (equivalente a app-traky-nextjs auth/sign-in).
 class SignInPage extends StatefulWidget {
@@ -22,19 +22,16 @@ class _SignInPageState extends State<SignInPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _loading = ValueNotifier<bool>(false);
-  final _scaffoldKey = GlobalKey<ScaffoldMessengerState>();
+  BuildContext? _snackBodyContext;
 
   late ClerkAuthState _authState;
-  late StreamSubscription<clerk.ClerkError> _errorSub;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       _authState = ClerkAuth.of(context);
-      _errorSub = _authState.errorStream.listen((e) {
-        _scaffoldKey.currentState?.showSnackBar(SnackBar(content: Text(e.message)));
-      });
     });
   }
 
@@ -42,7 +39,6 @@ class _SignInPageState extends State<SignInPage> {
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
-    _errorSub.cancel();
     super.dispose();
   }
 
@@ -50,8 +46,12 @@ class _SignInPageState extends State<SignInPage> {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
     if (email.isEmpty || password.isEmpty) {
-      _scaffoldKey.currentState?.showSnackBar(
-        const SnackBar(content: Text('Introduce correo y contraseña')),
+      final c = _snackBodyContext;
+      if (c == null || !c.mounted) return;
+      AdaptiveAppSnackBar.show(
+        c,
+        'Introduce correo y contraseña',
+        type: AdaptiveSnackBarType.info,
       );
       return;
     }
@@ -69,148 +69,149 @@ class _SignInPageState extends State<SignInPage> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textOnPrimary = isDark ? AppTheme.darkForeground : AppTheme.lightForeground;
-    final btnBg = isDark ? AppTheme.darkBackground : AppTheme.lightBackground;
-    final btnFg = isDark ? AppTheme.darkPrimary : AppTheme.lightPrimary;
-
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final onText = scheme.onSurface;
+    final accent = scheme.primary;
     return ScaffoldMessenger(
-      key: _scaffoldKey,
       child: Scaffold(
-        body: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 396),
-                child: AuthCard(
-                  description: 'Inicia sesión en tu cuenta',
-                  logo: const BrandAsset(height: 48),
-                  child: ValueListenableBuilder<bool>(
-                    valueListenable: _loading,
-                    builder: (context, loading, _) {
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          _SocialButton(
-                            label: 'Continuar con Google',
-                            icon: Icons.g_mobiledata_rounded,
-                            backgroundColor: btnBg,
-                            foregroundColor: btnFg,
-                            onPressed: loading ? null : () => _authState.ssoSignIn(context, clerk.Strategy.oauthGoogle),
-                          ),
-                          const SizedBox(height: 12),
-                          _SocialButton(
-                            label: 'Continuar con Apple',
-                            icon: Icons.apple,
-                            backgroundColor: textOnPrimary,
-                            foregroundColor: btnBg,
-                            onPressed: loading ? null : () => _authState.ssoSignIn(context, clerk.Strategy.oauthApple),
-                          ),
-                          const SizedBox(height: 20),
-                          Row(
+        backgroundColor: scheme.surface,
+        body: Builder(
+          builder: (snackCtx) {
+            _snackBodyContext = snackCtx;
+            return SafeArea(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(28, 12, 28, 28),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 400),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              Expanded(child: Divider(color: textOnPrimary.withValues(alpha: 0.5))),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 12),
-                                child: Text('ó', style: TextStyle(color: textOnPrimary, fontSize: 14)),
+                              const Center(
+                                child: BrandAsset(useIcon: true, height: 48),
                               ),
-                              Expanded(child: Divider(color: textOnPrimary.withValues(alpha: 0.5))),
+                              const SizedBox(height: 16),
+                              const Center(
+                                child: BrandAsset(height: 28),
+                              ),
+                              const SizedBox(height: 20),
+                              ValueListenableBuilder<bool>(
+                                valueListenable: _loading,
+                                builder: (context, loading, _) {
+                                  return Column(
+                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                    children: [
+                                      AuthSocialIconRow(
+                                        loading: loading,
+                                        accent: accent,
+                                        googleIcon: SvgPicture.asset(
+                                          AuthClerkAssets.googleSvg,
+                                          fit: BoxFit.contain,
+                                        ),
+                                        appleIcon: SvgPicture.asset(
+                                          AuthClerkAssets.appleSvg,
+                                          fit: BoxFit.contain,
+                                        ),
+                                        onGoogle: () => _authState.ssoSignIn(
+                                              context,
+                                              clerk.Strategy.oauthGoogle,
+                                            ),
+                                        onApple: () => _authState.ssoSignIn(
+                                              context,
+                                              clerk.Strategy.oauthApple,
+                                            ),
+                                      ),
+                                      const SizedBox(height: 22),
+                                      AuthOrDivider(onPrimary: onText),
+                                      const SizedBox(height: 22),
+                                      TextField(
+                                        controller: _emailController,
+                                        keyboardType: TextInputType.emailAddress,
+                                        textInputAction: TextInputAction.next,
+                                        style: theme.textTheme.bodyLarge?.copyWith(
+                                          color: scheme.onSurface,
+                                        ),
+                                        cursorColor: scheme.primary,
+                                        decoration: AppTheme.profileFieldDecoration(
+                                          context,
+                                          'Correo electrónico',
+                                          hint: 'nombre@gmail.com',
+                                        ),
+                                      ),
+                                      const SizedBox(height: 18),
+                                      TextField(
+                                        controller: _passwordController,
+                                        obscureText: true,
+                                        textInputAction: TextInputAction.done,
+                                        onSubmitted: (_) => _submit(),
+                                        style: theme.textTheme.bodyLarge?.copyWith(
+                                          color: scheme.onSurface,
+                                        ),
+                                        cursorColor: scheme.primary,
+                                        decoration: AppTheme.profileFieldDecoration(
+                                          context,
+                                          'Contraseña',
+                                        ),
+                                      ),
+                                      const SizedBox(height: 26),
+                                      AuthPrimaryCtaButton(
+                                        label: 'Iniciar sesión',
+                                        loading: loading,
+                                        onPrimary: scheme.onPrimary,
+                                        primary: scheme.primary,
+                                        onPressed: loading ? null : _submit,
+                                      ),
+                                      const SizedBox(height: 18),
+                                      Center(
+                                        child: TextButton(
+                                          onPressed: () => Navigator.of(context)
+                                              .pushReplacementNamed('/auth/sign-up'),
+                                          style: TextButton.styleFrom(
+                                            foregroundColor: accent,
+                                          ),
+                                          child: Text(
+                                            '¿No tienes una cuenta? Regístrate',
+                                            style: theme.textTheme.labelLarge?.copyWith(
+                                              decoration: TextDecoration.underline,
+                                              decorationColor:
+                                                  accent.withValues(alpha: 0.45),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      TextButton(
+                                        onPressed: () => Navigator.of(context)
+                                            .pushNamed('/auth/forgot-password'),
+                                        style: TextButton.styleFrom(
+                                          foregroundColor: accent,
+                                        ),
+                                        child: Text(
+                                          '¿Olvidaste tu contraseña?',
+                                          style: theme.textTheme.bodyMedium?.copyWith(
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              ),
                             ],
                           ),
-                          const SizedBox(height: 20),
-                          Text('Correo electrónico', style: TextStyle(color: textOnPrimary, fontSize: 14, fontWeight: FontWeight.w500)),
-                          const SizedBox(height: 6),
-                          TextField(
-                            controller: _emailController,
-                            keyboardType: TextInputType.emailAddress,
-                            decoration: InputDecoration(
-                              hintText: 'nombre@empresa.com',
-                              filled: true,
-                              fillColor: btnBg,
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppTheme.radiusMd)),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          Text('Contraseña', style: TextStyle(color: textOnPrimary, fontSize: 14, fontWeight: FontWeight.w500)),
-                          const SizedBox(height: 6),
-                          TextField(
-                            controller: _passwordController,
-                            obscureText: true,
-                            onSubmitted: (_) => _submit(),
-                            decoration: InputDecoration(
-                              filled: true,
-                              fillColor: btnBg,
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppTheme.radiusMd)),
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-                          SizedBox(
-                            height: 48,
-                            child: ElevatedButton(
-                              onPressed: loading ? null : _submit,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: btnBg,
-                                foregroundColor: btnFg,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppTheme.radiusMd)),
-                              ),
-                              child: loading ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(strokeWidth: 2)) : const Text('Iniciar sesión'),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          Center(
-                            child: TextButton(
-                              onPressed: () => Navigator.of(context).pushReplacementNamed('/auth/sign-up'),
-                              child: Text('¿No tienes una cuenta? Regístrate', style: TextStyle(color: textOnPrimary, fontSize: 14)),
-                            ),
-                          ),
-                          TextButton(
-                            onPressed: () => Navigator.of(context).pushNamed('/auth/forgot-password'),
-                            child: Text('¿Olvidaste tu contraseña?', style: TextStyle(color: textOnPrimary, fontSize: 14)),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
               ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SocialButton extends StatelessWidget {
-  const _SocialButton({
-    required this.label,
-    required this.icon,
-    required this.backgroundColor,
-    required this.foregroundColor,
-    this.onPressed,
-  });
-
-  final String label;
-  final IconData icon;
-  final Color backgroundColor;
-  final Color foregroundColor;
-  final VoidCallback? onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 48,
-      child: OutlinedButton(
-        onPressed: onPressed,
-        style: OutlinedButton.styleFrom(
-          backgroundColor: backgroundColor,
-          foregroundColor: foregroundColor,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppTheme.radiusMd)),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [Icon(icon, size: 22), const SizedBox(width: 10), Text(label)],
+            );
+          },
         ),
       ),
     );

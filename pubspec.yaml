@@ -33,7 +33,7 @@ dependencies:
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
-  cupertino_icons: ^1.0.8
+  cupertino_icons: ^1.0.9
 
   # Clerk - autenticación (sign-in / sign-up)
   clerk_auth: ^0.0.14-beta
@@ -44,7 +44,9 @@ dependencies:
 
   # HTTP para APIs enterprise
   http: ^1.2.0
-  adaptive_platform_ui: ^0.1.103
+  adaptive_platform_ui: ^0.1.104
+
+  flutter_svg: ^2.0.10+1
 
 dev_dependencies:
   flutter_test:
@@ -79,6 +81,7 @@ flutter:
   assets:
     - .env
     - assets/images/
+    - assets/clerk/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

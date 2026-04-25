@@ -36,7 +36,7 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  ThemeMode _themeMode = ThemeMode.light;
+  ThemeMode _themeMode = ThemeMode.dark;
 
   void _setThemeMode(ThemeMode mode) {
     setState(() => _themeMode = mode);
@@ -55,6 +55,7 @@ class _MyAppState extends State<MyApp> {
     if (clerkPublishableKey.isEmpty) {
       return MaterialApp(
         title: 'Traky',
+        debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,
         themeMode: _themeMode,
@@ -66,6 +67,7 @@ class _MyAppState extends State<MyApp> {
       config: ClerkAuthConfig(publishableKey: clerkPublishableKey),
       child: MaterialApp(
         title: 'Traky',
+        debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,
         themeMode: _themeMode,
